@@ -5,12 +5,17 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
@@ -24,7 +29,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var map: GoogleMap
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private val LOCATION_ACCESS_REQUEST = 1
+    private val TAG=SelectLocationFragment::class.java.simpleName
+
+    private val defaultZoomLevel=17f
+    private val defaultLocation=LatLng(-34.0, 151.0)
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -37,6 +47,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         setHasOptionsMenu(true)
         setDisplayHomeAsUpEnabled(true)
+
+
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireActivity())
 
 //        TODO: add the map setup implementation
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
@@ -61,7 +74,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     ) {
         if (requestCode == LOCATION_ACCESS_REQUEST) {
             if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                map.isMyLocationEnabled = true
+                enableUserLocation()
 
         }
     }
@@ -70,7 +83,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private fun enableUserLocation() {
         if (isPermissionEnabled()) {
             map.isMyLocationEnabled = true
-
+            getDeviceLocation()
 
         } else {
             requestPermissions(
@@ -89,10 +102,35 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap?) {
         map = googleMap!!
         enableUserLocation()
-       /* val sydney = LatLng(-34.0, 151.0)
-        val zoomLevel = 15f
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, zoomLevel))
-        map.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))*/
+
+        /* val sydney = LatLng(-34.0, 151.0)
+         val zoomLevel = 15f
+         map.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, zoomLevel))
+         map.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))*/
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun getDeviceLocation() {
+        Log.d(TAG,"getDeviceLocation() is called")
+        try {
+            if (isPermissionEnabled()) {
+                val locationResult = fusedLocationProviderClient.lastLocation
+                locationResult.addOnCompleteListener { task ->
+                    Log.d(TAG,"last location is ${task.result}")
+                    val currentLocation=task.result
+                    if (task.isSuccessful && currentLocation != null) {
+                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                        LatLng(currentLocation.latitude,currentLocation.longitude),defaultZoomLevel
+                        ))
+                    }else{
+                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, defaultZoomLevel))
+                    }
+
+                }
+            }
+        }catch(e:Exception){
+            Log.e(TAG,"Exception: ${e.message}")
+        }
     }
 
     private fun onLocationSelected() {
