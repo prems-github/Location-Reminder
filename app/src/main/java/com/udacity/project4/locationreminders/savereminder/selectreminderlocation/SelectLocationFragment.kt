@@ -1,15 +1,16 @@
 package com.udacity.project4.locationreminders.savereminder.selectreminderlocation
 
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.*
+import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
-import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
@@ -22,7 +23,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     //Use Koin to get the view model of the SaveReminder
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSelectLocationBinding
-    private lateinit var map:GoogleMap
+    private lateinit var map: GoogleMap
+    private val LOCATION_ACCESS_REQUEST = 1
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -51,12 +53,46 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         return binding.root
     }
 
+    @SuppressLint("MissingPermission")
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        if (requestCode == LOCATION_ACCESS_REQUEST) {
+            if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                map.isMyLocationEnabled = true
+
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun enableUserLocation() {
+        if (isPermissionEnabled()) {
+            map.isMyLocationEnabled = true
+
+
+        } else {
+            requestPermissions(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_ACCESS_REQUEST
+            )
+        }
+    }
+
+    private fun isPermissionEnabled() =
+        ContextCompat.checkSelfPermission(
+            requireContext(), Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+
     override fun onMapReady(googleMap: GoogleMap?) {
-        map=googleMap!!
-        val sydney = LatLng(-34.0, 151.0)
+        map = googleMap!!
+        enableUserLocation()
+       /* val sydney = LatLng(-34.0, 151.0)
         val zoomLevel = 15f
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, zoomLevel))
-        map.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
+        map.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))*/
     }
 
     private fun onLocationSelected() {
@@ -86,8 +122,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
         else -> super.onOptionsItemSelected(item)
     }
-
-
 
 
 }
