@@ -2,6 +2,8 @@ package com.udacity.project4.locationreminders.reminderslist
 
 import android.os.Bundle
 import android.view.*
+import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.databinding.DataBindingUtil
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
@@ -16,6 +18,7 @@ class ReminderListFragment : BaseFragment() {
     //use Koin to retrieve the ViewModel instance
     override val _viewModel: RemindersListViewModel by viewModel()
     private lateinit var binding: FragmentRemindersBinding
+    var previoustime: Long = 0
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -42,6 +45,17 @@ class ReminderListFragment : BaseFragment() {
         setupRecyclerView()
         binding.addReminderFAB.setOnClickListener {
             navigateToAddReminder()
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
+            if (System.currentTimeMillis() <= previoustime + 2000) {
+                requireActivity().finishAffinity()
+            } else {
+                Toast.makeText(
+                    requireActivity(),
+                    "Press once again to Logout", Toast.LENGTH_SHORT
+                ).show()
+                previoustime = System.currentTimeMillis()
+            }
         }
     }
 
@@ -83,5 +97,6 @@ class ReminderListFragment : BaseFragment() {
 //        display logout as menu item
         inflater.inflate(R.menu.main_menu, menu)
     }
+
 
 }
