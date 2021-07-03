@@ -18,6 +18,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.android.gms.maps.model.MarkerOptions
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
@@ -106,11 +107,22 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         map = googleMap!!
         enableUserLocation()
         setMapStyle(map)
+        setMarkOnLongClick(map)
+        setMarkOnPOIClick(map)
 
-        /* val sydney = LatLng(-34.0, 151.0)
-         val zoomLevel = 15f
-         map.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, zoomLevel))
-         map.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))*/
+    }
+
+    private fun setMarkOnPOIClick(map: GoogleMap) {
+        map.setOnPoiClickListener { poi ->
+            map.addMarker(MarkerOptions().position(poi.latLng).title(poi.name))
+
+        }
+    }
+
+    private fun setMarkOnLongClick(map: GoogleMap) {
+        map.setOnMapLongClickListener { LatLng ->
+            map.addMarker(MarkerOptions().position(LatLng))
+        }
     }
 
     private fun setMapStyle(map: GoogleMap) {
@@ -177,19 +189,19 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         // TODO: Change the map type based on the user's selection.
         R.id.normal_map -> {
-            map.mapType=GoogleMap.MAP_TYPE_NORMAL
+            map.mapType = GoogleMap.MAP_TYPE_NORMAL
             true
         }
         R.id.hybrid_map -> {
-            map.mapType=GoogleMap.MAP_TYPE_HYBRID
+            map.mapType = GoogleMap.MAP_TYPE_HYBRID
             true
         }
         R.id.satellite_map -> {
-            map.mapType=GoogleMap.MAP_TYPE_SATELLITE
+            map.mapType = GoogleMap.MAP_TYPE_SATELLITE
             true
         }
         R.id.terrain_map -> {
-            map.mapType=GoogleMap.MAP_TYPE_TERRAIN
+            map.mapType = GoogleMap.MAP_TYPE_TERRAIN
             true
         }
         else -> super.onOptionsItemSelected(item)
