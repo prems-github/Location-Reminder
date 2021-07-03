@@ -21,6 +21,10 @@
     <string name="poi">poi</string>
     <string name="location_required_error">Location services must be enabled to use the app</string>
     <string name="permission_denied_explanation">You need to grant location permission in order to select the location.</string>
+    <string name="background_permission_denied_explanation">You need to grant \"All time\" location permission in order save and use this as location reminder.</string>
+    <string name="background_permission_explanation">Dear user, in order to save location and to use geofence feature,
+        you need to grant \"All time\" location permission.</string>
+    <string name="all_time_permission_title">Regarding \"All time\" permission </string>
     <string name="settings">Settings</string>
     <string name="select_poi">Please select a point of interest</string>
     <string name="geofence_entered">Geofence Entered</string>
