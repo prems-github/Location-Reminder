@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
@@ -27,10 +28,10 @@ class SaveReminderFragment : BaseFragment() {
         setDisplayHomeAsUpEnabled(true)
 
         binding.viewModel = _viewModel
-        val args=SaveReminderFragmentArgs.fromBundle(requireArguments())
-        _viewModel.reminderSelectedLocationStr.value=args.locationName
-        _viewModel.latitude.value=args.poiLatitude.toDouble()
-        _viewModel.longitude.value=args.poiLongitude.toDouble()
+        val args = SaveReminderFragmentArgs.fromBundle(requireArguments())
+        _viewModel.reminderSelectedLocationStr.value = args.locationName
+        _viewModel.latitude.value = args.poiLatitude.toDouble()
+        _viewModel.longitude.value = args.poiLongitude.toDouble()
 
         return binding.root
     }
@@ -45,15 +46,31 @@ class SaveReminderFragment : BaseFragment() {
         }
 
         binding.saveReminder.setOnClickListener {
+            checkEmptyOrNot()
             val title = _viewModel.reminderTitle.value
-            val description = _viewModel.reminderDescription
+            val description = _viewModel.reminderDescription.value
             val location = _viewModel.reminderSelectedLocationStr.value
             val latitude = _viewModel.latitude.value
             val longitude = _viewModel.longitude.value
 
+   //         Toast.makeText(requireActivity(),"$title,$description,$location,$latitude,$longitude",Toast.LENGTH_SHORT).show()
+
 //            TODO: use the user entered reminder details to:
 //             1) add a geofencing request
 //             2) save the reminder to the local db
+        }
+    }
+
+    //checks the user input fields empty or null and if it so displays toast to fill the same
+
+    private fun checkEmptyOrNot() {
+        if (binding.reminderTitle.text.isNullOrEmpty() || binding.reminderDescription.text.isNullOrEmpty()
+        ) {
+            Toast.makeText(requireActivity(), R.string.enter_title_description, Toast.LENGTH_SHORT)
+                .show()
+        }else if(binding.selectedLocation.text.isNullOrEmpty()){
+            Toast.makeText(requireActivity(), R.string.select_location, Toast.LENGTH_SHORT)
+                .show()
         }
     }
 

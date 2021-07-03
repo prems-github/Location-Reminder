@@ -33,6 +33,7 @@
     <string name="welcome">Welcome</string>
     <string name="err_enter_title">Please enter title</string>
     <string name="err_select_location">Please select location</string>
+    <string name="enter_title_description">Please enter your title and description</string>
 
 
     <string name="unsuccessfull_signin">Sign-in unsuccessfull. Try again</string>
