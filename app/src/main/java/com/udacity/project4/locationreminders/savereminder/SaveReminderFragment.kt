@@ -27,6 +27,10 @@ class SaveReminderFragment : BaseFragment() {
         setDisplayHomeAsUpEnabled(true)
 
         binding.viewModel = _viewModel
+        val args=SaveReminderFragmentArgs.fromBundle(requireArguments())
+        _viewModel.reminderSelectedLocationStr.value=args.locationName
+        _viewModel.latitude.value=args.poiLatitude.toDouble()
+        _viewModel.longitude.value=args.poiLongitude.toDouble()
 
         return binding.root
     }
@@ -44,7 +48,7 @@ class SaveReminderFragment : BaseFragment() {
             val title = _viewModel.reminderTitle.value
             val description = _viewModel.reminderDescription
             val location = _viewModel.reminderSelectedLocationStr.value
-            val latitude = _viewModel.latitude
+            val latitude = _viewModel.latitude.value
             val longitude = _viewModel.longitude.value
 
 //            TODO: use the user entered reminder details to:

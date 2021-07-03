@@ -10,6 +10,7 @@ import android.util.Log
 import android.view.*
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
+import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -19,6 +20,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
@@ -38,6 +40,11 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     private val defaultZoomLevel = 17f
     private val defaultLocation = LatLng(-34.0, 151.0)
+
+    private lateinit var poiTitle:String
+    private  var poiLatitude=0.0
+    private  var poiLongitude=0.0
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -64,10 +71,23 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 //        TODO: put a marker to location that the user selected
 
 
+
+
+
 //        TODO: call this function after the user confirms on the selected location
         onLocationSelected()
 
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        binding.saveButton.setOnClickListener {
+            findNavController().navigate(SelectLocationFragmentDirections
+                .actionSelectLocationFragmentToSaveReminderFragment(poiTitle,
+                    poiLatitude.toFloat(), poiLongitude.toFloat()
+                ))
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -107,7 +127,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         map = googleMap!!
         enableUserLocation()
         setMapStyle(map)
-        setMarkOnLongClick(map)
+        Snackbar.make(requireView().rootView,R.string.select_poi,Snackbar.LENGTH_SHORT).show()
+       // setMarkOnLongClick(map)
         setMarkOnPOIClick(map)
 
     }
@@ -115,15 +136,17 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private fun setMarkOnPOIClick(map: GoogleMap) {
         map.setOnPoiClickListener { poi ->
             map.addMarker(MarkerOptions().position(poi.latLng).title(poi.name))
-
+            poiTitle=poi.name
+            poiLatitude=poi.latLng.latitude
+            poiLongitude=poi.latLng.longitude
         }
     }
 
-    private fun setMarkOnLongClick(map: GoogleMap) {
+   /* private fun setMarkOnLongClick(map: GoogleMap) {
         map.setOnMapLongClickListener { LatLng ->
             map.addMarker(MarkerOptions().position(LatLng))
         }
-    }
+    }*/
 
     private fun setMapStyle(map: GoogleMap) {
         try {
