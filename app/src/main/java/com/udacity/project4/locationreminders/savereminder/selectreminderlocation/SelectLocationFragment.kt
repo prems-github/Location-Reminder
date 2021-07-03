@@ -4,6 +4,7 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -16,6 +17,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
@@ -31,10 +33,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var map: GoogleMap
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private val LOCATION_ACCESS_REQUEST = 1
-    private val TAG=SelectLocationFragment::class.java.simpleName
+    private val TAG = SelectLocationFragment::class.java.simpleName
 
-    private val defaultZoomLevel=17f
-    private val defaultLocation=LatLng(-34.0, 151.0)
+    private val defaultZoomLevel = 17f
+    private val defaultLocation = LatLng(-34.0, 151.0)
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -49,7 +51,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         setDisplayHomeAsUpEnabled(true)
 
 
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+        fusedLocationProviderClient =
+            LocationServices.getFusedLocationProviderClient(requireActivity())
 
 //        TODO: add the map setup implementation
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
@@ -102,6 +105,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap?) {
         map = googleMap!!
         enableUserLocation()
+        setMapStyle(map)
 
         /* val sydney = LatLng(-34.0, 151.0)
          val zoomLevel = 15f
@@ -109,27 +113,53 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
          map.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))*/
     }
 
+    private fun setMapStyle(map: GoogleMap) {
+        try {
+            val success = map.setMapStyle(
+                MapStyleOptions.loadRawResourceStyle(
+                    requireActivity(),
+                    R.raw.map_style
+                )
+            )
+            if (!success) {
+                Log.e(TAG, "Parsing failed")
+            }
+        } catch (e: Resources.NotFoundException) {
+            Log.e(TAG, "Resource not found $e")
+        }
+    }
+
+    //Gets device location and move camera to that location
+
     @SuppressLint("MissingPermission")
     private fun getDeviceLocation() {
-        Log.d(TAG,"getDeviceLocation() is called")
+        Log.d(TAG, "getDeviceLocation() is called")
         try {
             if (isPermissionEnabled()) {
                 val locationResult = fusedLocationProviderClient.lastLocation
                 locationResult.addOnCompleteListener { task ->
-                    Log.d(TAG,"last location is ${task.result}")
-                    val currentLocation=task.result
+                    Log.d(TAG, "last location is ${task.result}")
+                    val currentLocation = task.result
                     if (task.isSuccessful && currentLocation != null) {
-                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                        LatLng(currentLocation.latitude,currentLocation.longitude),defaultZoomLevel
-                        ))
-                    }else{
-                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, defaultZoomLevel))
+                        map.moveCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                LatLng(currentLocation.latitude, currentLocation.longitude),
+                                defaultZoomLevel
+                            )
+                        )
+                    } else {
+                        map.moveCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                defaultLocation,
+                                defaultZoomLevel
+                            )
+                        )
                     }
 
                 }
             }
-        }catch(e:Exception){
-            Log.e(TAG,"Exception: ${e.message}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception: ${e.message}")
         }
     }
 
@@ -147,15 +177,19 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         // TODO: Change the map type based on the user's selection.
         R.id.normal_map -> {
+            map.mapType=GoogleMap.MAP_TYPE_NORMAL
             true
         }
         R.id.hybrid_map -> {
+            map.mapType=GoogleMap.MAP_TYPE_HYBRID
             true
         }
         R.id.satellite_map -> {
+            map.mapType=GoogleMap.MAP_TYPE_SATELLITE
             true
         }
         R.id.terrain_map -> {
+            map.mapType=GoogleMap.MAP_TYPE_TERRAIN
             true
         }
         else -> super.onOptionsItemSelected(item)

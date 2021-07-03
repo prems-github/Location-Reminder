@@ -1,0 +1,11 @@
+[
+  {
+    "featureType": "road.local",
+    "elementType": "geometry.fill",
+    "stylers": [
+      {
+        "color": "#c9c7b0"
+      }
+    ]
+  }
+]
