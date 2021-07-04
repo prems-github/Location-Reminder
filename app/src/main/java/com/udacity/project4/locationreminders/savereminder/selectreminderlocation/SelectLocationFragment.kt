@@ -12,6 +12,7 @@ import android.provider.Settings
 import android.util.Log
 import android.view.*
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
@@ -51,6 +52,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private  var poiLatitude=0.0
     private  var poiLongitude=0.0
     private var isMapReady=false
+    private var isPoiSelected=false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -71,28 +73,20 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 //        TODO: add the map setup implementation
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-
-//        TODO: zoom to the user location after taking his permission
-//        TODO: add style to the map
-//        TODO: put a marker to location that the user selected
-
-
-
-
-
-//        TODO: call this function after the user confirms on the selected location
-        onLocationSelected()
-
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.saveButton.setOnClickListener {
-            findNavController().navigate(SelectLocationFragmentDirections
-                .actionSelectLocationFragmentToSaveReminderFragment(poiTitle,
-                    poiLatitude.toFloat(), poiLongitude.toFloat()
-                ))
+            if(isPoiSelected){
+                findNavController().navigate(SelectLocationFragmentDirections
+                    .actionSelectLocationFragmentToSaveReminderFragment(poiTitle,
+                        poiLatitude.toFloat(), poiLongitude.toFloat()
+                    ))
+            }else{
+                Toast.makeText(requireActivity(),R.string.select_location,Toast.LENGTH_SHORT).show()
+            }
         }
 
     }
@@ -136,6 +130,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         if (isPermissionEnabled()) {
             map.isMyLocationEnabled = true
             getDeviceLocation()
+            Snackbar.make(requireView().rootView,R.string.select_poi,Snackbar.LENGTH_SHORT).show()
 
         } else if(shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)){
             AlertDialog.Builder(requireActivity())
@@ -182,7 +177,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         isMapReady=true
         enableUserLocation()
         setMapStyle(map)
-        Snackbar.make(requireView().rootView,R.string.select_poi,Snackbar.LENGTH_SHORT).show()
         setMarkOnPOIClick(map)
 
     }
@@ -193,6 +187,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             poiTitle=poi.name
             poiLatitude=poi.latLng.latitude
             poiLongitude=poi.latLng.longitude
+            isPoiSelected=true
         }
     }
 
@@ -245,13 +240,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             Log.e(TAG, "Exception: ${e.message}")
         }
     }
-
-    private fun onLocationSelected() {
-        //        TODO: When the user confirms on the selected location,
-        //         send back the selected location details to the view model
-        //         and navigate back to the previous fragment to save the reminder and add the geofence
-    }
-
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.map_options, menu)
