@@ -20,6 +20,7 @@ import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSaveReminderBinding
+import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
 
@@ -66,11 +67,8 @@ class SaveReminderFragment : BaseFragment() {
             if (!isFieldsAreEmpty()) {
                 if (runningQOrLater) {
                     if (isBackgroundPermissionEnabled()) {
-                        Toast.makeText(
-                            requireActivity(),
-                            "Background Location approved",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        saveReminderInDB()
+ //                       addGeoFenceRequest()
                     } else {
                         AlertDialog.Builder(requireActivity())
                             .setTitle(R.string.all_time_permission_title)
@@ -87,7 +85,7 @@ class SaveReminderFragment : BaseFragment() {
                     }
                 } else {
                     saveReminderInDB()
-                    addGeoFenceRequest()
+ //                   addGeoFenceRequest()
 
                 }
             }
@@ -97,7 +95,18 @@ class SaveReminderFragment : BaseFragment() {
     }
 
     private fun saveReminderInDB() {
-        TODO("Not yet implemented")
+        val title = _viewModel.reminderTitle.value
+        val description = _viewModel.reminderDescription.value
+        val location = _viewModel.reminderSelectedLocationStr.value
+        val latitude = _viewModel.latitude.value
+        val longitude = _viewModel.longitude.value
+        val newReminder=ReminderDataItem(title,description,location,latitude,longitude)
+        _viewModel.saveReminder(newReminder)
+        _viewModel.onClear()
+        Toast.makeText(requireActivity(),"Reminder saved!",Toast.LENGTH_SHORT).show()
+        _viewModel.navigationCommand.value=
+            NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToReminderListFragment())
+
     }
 
     private fun addGeoFenceRequest() {
