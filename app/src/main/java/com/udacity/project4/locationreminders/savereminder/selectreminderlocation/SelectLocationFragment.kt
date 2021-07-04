@@ -3,11 +3,16 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.*
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
@@ -21,6 +26,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
+import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
@@ -44,7 +50,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var poiTitle:String
     private  var poiLatitude=0.0
     private  var poiLongitude=0.0
-
+    private var isMapReady=false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -88,6 +94,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     poiLatitude.toFloat(), poiLongitude.toFloat()
                 ))
         }
+
     }
 
     @SuppressLint("MissingPermission")
@@ -97,10 +104,31 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         grantResults: IntArray
     ) {
         if (requestCode == LOCATION_ACCESS_REQUEST) {
-            if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                enableUserLocation()
+            if (grantResults.isEmpty() || grantResults[0] == PackageManager.PERMISSION_DENIED) {
+                showSnackbar()
 
+            } else {
+               enableUserLocation()
+            }
         }
+    }
+
+    private fun showSnackbar() {
+        Snackbar.make(
+            binding.root,
+            R.string.permission_denied_explanation,
+            Snackbar.LENGTH_INDEFINITE
+        ).also {
+            val snackbarTextView = (it.view.findViewById(R.id.snackbar_text)) as TextView
+            snackbarTextView.maxLines = 3
+        }
+            .setAction(R.string.settings) {
+                startActivity(Intent().apply {
+                    action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                    data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                })
+            }.show()
     }
 
     @SuppressLint("MissingPermission")
@@ -109,7 +137,20 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             map.isMyLocationEnabled = true
             getDeviceLocation()
 
-        } else {
+        } else if(shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)){
+            AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.location_permission_title)
+                .setMessage(R.string.permission_denied_explanation)
+                .setPositiveButton("OK", { dialogInterface, i ->
+                    requestPermissions(
+                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                        LOCATION_ACCESS_REQUEST
+                    )
+                })
+                .setNegativeButton("Cancel", { dialogInterface, i ->
+                    dialogInterface.dismiss()
+                }).create().show()
+        }else{
             requestPermissions(
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 LOCATION_ACCESS_REQUEST
@@ -122,13 +163,26 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             requireContext(), Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
+    @SuppressLint("MissingPermission")
+    override fun onResume() {
+        super.onResume()
+       if(isMapReady && isPermissionEnabled()) {
+           Log.d(TAG,"Permission enabled on resume")
+           map.isMyLocationEnabled = true
+           getDeviceLocation()
+       }else{
+           showSnackbar()
+       }
+
+    }
 
     override fun onMapReady(googleMap: GoogleMap?) {
         map = googleMap!!
+        Log.d(TAG,"map is ready")
+        isMapReady=true
         enableUserLocation()
         setMapStyle(map)
         Snackbar.make(requireView().rootView,R.string.select_poi,Snackbar.LENGTH_SHORT).show()
-       // setMarkOnLongClick(map)
         setMarkOnPOIClick(map)
 
     }
@@ -141,12 +195,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             poiLongitude=poi.latLng.longitude
         }
     }
-
-   /* private fun setMarkOnLongClick(map: GoogleMap) {
-        map.setOnMapLongClickListener { LatLng ->
-            map.addMarker(MarkerOptions().position(LatLng))
-        }
-    }*/
 
     private fun setMapStyle(map: GoogleMap) {
         try {
@@ -168,12 +216,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     @SuppressLint("MissingPermission")
     private fun getDeviceLocation() {
-        Log.d(TAG, "getDeviceLocation() is called")
+//        Log.d(TAG, "getDeviceLocation() is called")
         try {
             if (isPermissionEnabled()) {
                 val locationResult = fusedLocationProviderClient.lastLocation
                 locationResult.addOnCompleteListener { task ->
-                    Log.d(TAG, "last location is ${task.result}")
+//                    Log.d(TAG, "last location is ${task.result}")
                     val currentLocation = task.result
                     if (task.isSuccessful && currentLocation != null) {
                         map.moveCamera(
