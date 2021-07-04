@@ -1,7 +1,6 @@
 package com.udacity.project4.locationreminders.savereminder
 
 import android.Manifest
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -30,7 +29,7 @@ class SaveReminderFragment : BaseFragment() {
     private lateinit var binding: FragmentSaveReminderBinding
     private val runningQOrLater =
         android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
-    private val BACKGROUND_LOCATION_REQUEST=2
+    private val BACKGROUND_LOCATION_REQUEST = 2
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -59,32 +58,34 @@ class SaveReminderFragment : BaseFragment() {
                 NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
         }
 
-
+        /** requests background permission with educated UI if running android Q or later.
+         *   If permissions are in place, proceed with saving reminder and creating geofence
+         * */
 
         binding.saveReminder.setOnClickListener {
-            if(!isFieldsAreEmpty()){
+            if (!isFieldsAreEmpty()) {
                 if (runningQOrLater) {
                     if (isBackgroundPermissionEnabled()) {
-                        Toast.makeText(requireActivity(),"Background Location approved",Toast.LENGTH_SHORT).show()
-                    }else{
+                        Toast.makeText(
+                            requireActivity(),
+                            "Background Location approved",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
                         AlertDialog.Builder(requireActivity())
                             .setTitle(R.string.all_time_permission_title)
                             .setMessage(R.string.background_permission_explanation)
-                            .setPositiveButton("OK", DialogInterface.OnClickListener { dialogInterface, i ->
+                            .setPositiveButton("OK", { dialogInterface, i ->
                                 requestPermissions(
                                     arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
                                     BACKGROUND_LOCATION_REQUEST
                                 )
                             })
-                            .setNegativeButton("Cancel", DialogInterface.OnClickListener { dialogInterface, i ->
+                            .setNegativeButton("Cancel", { dialogInterface, i ->
                                 dialogInterface.dismiss()
                             }).create().show()
-                        /*requestPermissions(
-                            arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
-                            BACKGROUND_LOCATION_REQUEST
-                        )*/
                     }
-                }else{
+                } else {
                     saveReminderInDB()
                     addGeoFenceRequest()
 
@@ -103,53 +104,64 @@ class SaveReminderFragment : BaseFragment() {
         TODO("Not yet implemented")
     }
 
+    /**
+     * If permission are denied, show indefinite snackbar with a message to user
+     * plus action settings button to permission page
+     */
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-       if(requestCode==BACKGROUND_LOCATION_REQUEST){
-           if(grantResults.isEmpty() || grantResults[0]==PackageManager.PERMISSION_DENIED){
-              Snackbar.make(
-                   binding.root,
-                   R.string.background_permission_denied_explanation,
-                   Snackbar.LENGTH_INDEFINITE
-               ).also {
-                   val snackbarTextView=(it.view.findViewById(R.id.snackbar_text)) as TextView
-                  snackbarTextView.maxLines=3
-              }
-                  .setAction(R.string.settings) {
-                       startActivity(Intent().apply {
-                           action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                           data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
-                           flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                       })
-                   }.show()
+        if (requestCode == BACKGROUND_LOCATION_REQUEST) {
+            if (grantResults.isEmpty() || grantResults[0] == PackageManager.PERMISSION_DENIED) {
+                Snackbar.make(
+                    binding.root,
+                    R.string.background_permission_denied_explanation,
+                    Snackbar.LENGTH_INDEFINITE
+                ).also {
+                    val snackbarTextView = (it.view.findViewById(R.id.snackbar_text)) as TextView
+                    snackbarTextView.maxLines = 3
+                }
+                    .setAction(R.string.settings) {
+                        startActivity(Intent().apply {
+                            action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                            data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        })
+                    }.show()
 
-           }else{
-               Toast.makeText(requireActivity(),"Background Location approved",Toast.LENGTH_SHORT).show()
-           }
-       }
+            } else {
+                Toast.makeText(
+                    requireActivity(),
+                    "Background Location approved",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
     }
+
+    //checks if background permissin is enabled or not (applicable only for android Q and later)
 
     private fun isBackgroundPermissionEnabled() = ContextCompat.checkSelfPermission(
         requireContext(), android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
     ) == PackageManager.PERMISSION_GRANTED
 
+
     //checks the user input fields empty or null and if it so displays toast to fill the same
 
     private fun isFieldsAreEmpty(): Boolean {
-        var isEmpty=true
-        if (binding.reminderTitle.text.isNullOrEmpty() || binding.reminderDescription.text.isNullOrEmpty()
-        ) {
-            Toast.makeText(requireActivity(), R.string.enter_title_description, Toast.LENGTH_SHORT)
-                .show()
-        } else if (binding.selectedLocation.text.isNullOrEmpty()) {
+        var isEmpty = true
+        if (binding.selectedLocation.text.isNullOrEmpty()) {
             Toast.makeText(requireActivity(), R.string.select_location, Toast.LENGTH_SHORT)
                 .show()
 
-        }else{
-            isEmpty=false
+        } else if (binding.reminderTitle.text.isNullOrEmpty() || binding.reminderDescription.text.isNullOrEmpty()
+        ) {
+            Toast.makeText(requireActivity(), R.string.enter_title_description, Toast.LENGTH_SHORT)
+                .show()
+        } else {
+            isEmpty = false
         }
         return isEmpty
     }
