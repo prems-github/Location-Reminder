@@ -35,6 +35,11 @@ class ReminderDescriptionActivity : AppCompatActivity() {
         )
         val reminderDataItem= intent.getSerializableExtra(EXTRA_ReminderDataItem) as ReminderDataItem
 
+        binding.location.text=getString(R.string.arrived_location,reminderDataItem.location)
+
+        binding.reminderTitle.text=reminderDataItem.title
+        binding.reminderDescription.text=reminderDataItem.description
+
         Toast.makeText(this,"${reminderDataItem.location}", Toast.LENGTH_SHORT).show()
 
 
