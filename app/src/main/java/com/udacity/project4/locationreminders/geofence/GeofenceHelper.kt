@@ -13,6 +13,7 @@ class GeofenceHelper(base: Context?) : ContextWrapper(base) {
 
     private val pendingIntent: PendingIntent by lazy {
         val intent = Intent(this, GeofenceBroadcastReceiver::class.java)
+        intent.action= ACTION_GEOFENCE_EVENT
         PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
@@ -34,4 +35,9 @@ class GeofenceHelper(base: Context?) : ContextWrapper(base) {
 
     @JvmName("getPendingIntent1")
     fun getPendingIntent()=pendingIntent
+
+    companion object {
+        internal const val ACTION_GEOFENCE_EVENT =
+            "ReminderActivity.LocationReminder.action.ACTION_GEOFENCE_EVENT"
+    }
 }
