@@ -16,7 +16,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
-import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -30,6 +29,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
+import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
@@ -80,10 +80,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         super.onViewCreated(view, savedInstanceState)
         binding.saveButton.setOnClickListener {
             if(isPoiSelected){
-                findNavController().navigate(SelectLocationFragmentDirections
-                    .actionSelectLocationFragmentToSaveReminderFragment(poiTitle,
-                        poiLatitude.toFloat(), poiLongitude.toFloat()
-                    ))
+                _viewModel.reminderSelectedLocationStr.value=poiTitle
+                _viewModel.latitude.value=poiLatitude
+                _viewModel.longitude.value=poiLongitude
+                _viewModel.navigationCommand.value=NavigationCommand.Back
             }else{
                 Toast.makeText(requireActivity(),R.string.select_location,Toast.LENGTH_SHORT).show()
             }

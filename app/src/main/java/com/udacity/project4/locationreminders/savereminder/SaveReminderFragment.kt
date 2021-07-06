@@ -56,11 +56,6 @@ class SaveReminderFragment : BaseFragment() {
 
         geofencingClient = LocationServices.getGeofencingClient(requireActivity())
         geofenceHelper = GeofenceHelper(requireActivity())
-        val args = SaveReminderFragmentArgs.fromBundle(requireArguments())
-        _viewModel.reminderSelectedLocationStr.value = args.locationName
-        _viewModel.latitude.value = args.poiLatitude.toDouble()
-        _viewModel.longitude.value = args.poiLongitude.toDouble()
-
         return binding.root
     }
 
@@ -116,10 +111,6 @@ class SaveReminderFragment : BaseFragment() {
         _viewModel.saveReminder(newReminder)
         addGeoFence(newReminder.id)
  //       _viewModel.onClear()
-        Toast.makeText(requireActivity(), "Reminder saved!", Toast.LENGTH_SHORT).show()
-        _viewModel.navigationCommand.value =
-            NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToReminderListFragment())
-
     }
 
     @SuppressLint("MissingPermission")
