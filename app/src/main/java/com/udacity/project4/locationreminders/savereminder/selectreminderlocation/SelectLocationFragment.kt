@@ -25,6 +25,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.PointOfInterest
 import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
@@ -44,15 +45,11 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private val LOCATION_ACCESS_REQUEST = 1
     private val TAG = SelectLocationFragment::class.java.simpleName
-
     private val defaultZoomLevel = 17f
     private val defaultLocation = LatLng(-34.0, 151.0)
+    private var pointOfInterest: PointOfInterest? = null
+    private var isMapReady = false
 
-    private lateinit var poiTitle:String
-    private  var poiLatitude=0.0
-    private  var poiLongitude=0.0
-    private var isMapReady=false
-    private var isPoiSelected=false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -62,10 +59,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         binding.viewModel = _viewModel
         binding.lifecycleOwner = this
-
         setHasOptionsMenu(true)
         setDisplayHomeAsUpEnabled(true)
-
 
         fusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(requireActivity())
@@ -79,14 +74,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.saveButton.setOnClickListener {
-            if(isPoiSelected){
-                _viewModel.reminderSelectedLocationStr.value=poiTitle
-                _viewModel.latitude.value=poiLatitude
-                _viewModel.longitude.value=poiLongitude
-                _viewModel.navigationCommand.value=NavigationCommand.Back
-            }else{
-                Toast.makeText(requireActivity(),R.string.select_location,Toast.LENGTH_SHORT).show()
-            }
+            pointOfInterest?.let {
+                _viewModel.reminderSelectedLocationStr.value = it.name
+                _viewModel.latitude.value = it.latLng.latitude
+                _viewModel.longitude.value = it.latLng.longitude
+                _viewModel.navigationCommand.value = NavigationCommand.Back
+            } ?: Toast.makeText(requireActivity(), R.string.select_location, Toast.LENGTH_SHORT)
+                .show()
         }
 
     }
@@ -100,9 +94,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         if (requestCode == LOCATION_ACCESS_REQUEST) {
             if (grantResults.isEmpty() || grantResults[0] == PackageManager.PERMISSION_DENIED) {
                 showSnackbar()
-
             } else {
-               enableUserLocation()
+                enableUserLocation()
             }
         }
     }
@@ -130,9 +123,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         if (isPermissionEnabled()) {
             map.isMyLocationEnabled = true
             getDeviceLocation()
-            Snackbar.make(requireView().rootView,R.string.select_poi,Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(requireView().rootView, R.string.select_poi, Snackbar.LENGTH_SHORT).show()
 
-        } else if(shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)){
+        } else if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
             AlertDialog.Builder(requireActivity())
                 .setTitle(R.string.location_permission_title)
                 .setMessage(R.string.permission_denied_explanation)
@@ -145,7 +138,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 .setNegativeButton("Cancel", { dialogInterface, i ->
                     dialogInterface.dismiss()
                 }).create().show()
-        }else{
+        } else {
             requestPermissions(
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 LOCATION_ACCESS_REQUEST
@@ -161,33 +154,28 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     @SuppressLint("MissingPermission")
     override fun onResume() {
         super.onResume()
-       if(isMapReady && isPermissionEnabled()) {
-           Log.d(TAG,"Permission enabled on resume")
-           map.isMyLocationEnabled = true
-           getDeviceLocation()
-       }else{
-           showSnackbar()
-       }
-
+        if (isMapReady && isPermissionEnabled()) {
+            Log.d(TAG, "Permission enabled on resume")
+            map.isMyLocationEnabled = true
+            getDeviceLocation()
+        } else {
+            showSnackbar()
+        }
     }
 
     override fun onMapReady(googleMap: GoogleMap?) {
         map = googleMap!!
-        Log.d(TAG,"map is ready")
-        isMapReady=true
+        Log.d(TAG, "map is ready")
+        isMapReady = true
         enableUserLocation()
         setMapStyle(map)
         setMarkOnPOIClick(map)
-
     }
 
     private fun setMarkOnPOIClick(map: GoogleMap) {
         map.setOnPoiClickListener { poi ->
             map.addMarker(MarkerOptions().position(poi.latLng).title(poi.name))
-            poiTitle=poi.name
-            poiLatitude=poi.latLng.latitude
-            poiLongitude=poi.latLng.longitude
-            isPoiSelected=true
+            pointOfInterest = poi
         }
     }
 
@@ -233,7 +221,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                             )
                         )
                     }
-
                 }
             }
         } catch (e: Exception) {

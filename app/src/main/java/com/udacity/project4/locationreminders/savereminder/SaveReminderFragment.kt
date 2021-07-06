@@ -41,8 +41,8 @@ class SaveReminderFragment : BaseFragment() {
     private val RADIUS = 100f
     private lateinit var geofencingClient: GeofencingClient
     private lateinit var geofenceHelper: GeofenceHelper
-    private val TAG=SaveReminderFragment::class.java.simpleName
-
+    private val TAG = SaveReminderFragment::class.java.simpleName
+    private lateinit var reminderDataItem: ReminderDataItem
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -50,10 +50,8 @@ class SaveReminderFragment : BaseFragment() {
     ): View? {
         binding =
             DataBindingUtil.inflate(inflater, R.layout.fragment_save_reminder, container, false)
-
         setDisplayHomeAsUpEnabled(true)
         binding.viewModel = _viewModel
-
         geofencingClient = LocationServices.getGeofencingClient(requireActivity())
         geofenceHelper = GeofenceHelper(requireActivity())
         return binding.root
@@ -73,10 +71,19 @@ class SaveReminderFragment : BaseFragment() {
          * */
 
         binding.saveReminder.setOnClickListener {
-            if (!isFieldsAreEmpty()) {
+            val title = _viewModel.reminderTitle.value
+            val description = _viewModel.reminderDescription.value
+            val location = _viewModel.reminderSelectedLocationStr.value
+            val latitude = _viewModel.latitude.value
+            val longitude = _viewModel.longitude.value
+
+            reminderDataItem = ReminderDataItem(title, description, location, latitude, longitude)
+
+            if (_viewModel.validateEnteredData(reminderDataItem)) {
                 if (runningQOrLater) {
                     if (isBackgroundPermissionEnabled()) {
-                        saveReminderInDB()
+                        _viewModel.saveReminder(reminderDataItem)
+                        addGeoFence(reminderDataItem.id)
                     } else {
                         AlertDialog.Builder(requireActivity())
                             .setTitle(R.string.all_time_permission_title)
@@ -92,29 +99,15 @@ class SaveReminderFragment : BaseFragment() {
                             }).create().show()
                     }
                 } else {
-                    saveReminderInDB()
-
+                    _viewModel.saveReminder(reminderDataItem)
+                    addGeoFence(reminderDataItem.id)
                 }
             }
-
-
         }
     }
 
-    private fun saveReminderInDB() {
-        val title = _viewModel.reminderTitle.value
-        val description = _viewModel.reminderDescription.value
-        val location = _viewModel.reminderSelectedLocationStr.value
-        val latitude = _viewModel.latitude.value
-        val longitude = _viewModel.longitude.value
-        val newReminder = ReminderDataItem(title, description, location, latitude, longitude)
-        _viewModel.saveReminder(newReminder)
-        addGeoFence(newReminder.id)
- //       _viewModel.onClear()
-    }
-
     @SuppressLint("MissingPermission")
-    private fun addGeoFence(geofenceID:String) {
+    private fun addGeoFence(geofenceID: String) {
 
         val geofence = geofenceHelper.getGeofence(
             geofenceID,
@@ -126,7 +119,7 @@ class SaveReminderFragment : BaseFragment() {
         val pendingIntent = geofenceHelper.getPendingIntent()
         geofencingClient.addGeofences(geofencingRequest, pendingIntent)
             .addOnSuccessListener {
-            Log.d(TAG,"Geofence added successfully")
+                Log.d(TAG, "Geofence added successfully")
             }
             .addOnFailureListener {
                 Toast.makeText(
@@ -182,24 +175,6 @@ class SaveReminderFragment : BaseFragment() {
         requireContext(), android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
     ) == PackageManager.PERMISSION_GRANTED
 
-
-    //checks the user input fields empty or null and if it so displays toast to fill the same
-
-    private fun isFieldsAreEmpty(): Boolean {
-        var isEmpty = true
-        if (binding.selectedLocation.text.isNullOrEmpty()) {
-            Toast.makeText(requireActivity(), R.string.select_location, Toast.LENGTH_SHORT)
-                .show()
-
-        } else if (binding.reminderTitle.text.isNullOrEmpty() || binding.reminderDescription.text.isNullOrEmpty()
-        ) {
-            Toast.makeText(requireActivity(), R.string.enter_title_description, Toast.LENGTH_SHORT)
-                .show()
-        } else {
-            isEmpty = false
-        }
-        return isEmpty
-    }
 
     override fun onDestroy() {
         super.onDestroy()
