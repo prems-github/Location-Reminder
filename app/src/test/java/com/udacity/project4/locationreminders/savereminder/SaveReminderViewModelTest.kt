@@ -1,13 +1,16 @@
 package com.udacity.project4.locationreminders.savereminder
 
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.udacity.project4.locationreminders.data.FakeDataSource
+import com.udacity.project4.locationreminders.getOrAwaitValue
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.Is.`is`
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.context.stopKoin
@@ -16,10 +19,13 @@ import org.koin.core.context.stopKoin
 @RunWith(AndroidJUnit4::class)
 class SaveReminderViewModelTest {
 
+    @get:Rule
+    var instantTaskExecutorRule = InstantTaskExecutorRule()
 
     //TODO: provide testing to the SaveReminderView and its live data objects
     private lateinit var saveReminderViewModel: SaveReminderViewModel
     private lateinit var fakeDataSource: FakeDataSource
+
 
     @Before
     fun setupViewModel() {
@@ -35,6 +41,7 @@ class SaveReminderViewModelTest {
     @Test
     fun validateEnteredData_withValidData_returnstrue() {
 
+        //given a new reminder with valid data
         val reminder = ReminderDataItem(
             title = "New Market",
             description = "Buy Groceries",
@@ -43,8 +50,11 @@ class SaveReminderViewModelTest {
             longitude = 151.0
         )
 
-        val result=saveReminderViewModel.validateEnteredData(reminder)
-        assertThat(result,`is`(true))
+        //when validating
+        val result = saveReminderViewModel.validateEnteredData(reminder)
+
+        //returns true
+        assertThat(result, `is`(true))
 
     }
 
@@ -52,6 +62,7 @@ class SaveReminderViewModelTest {
     @Test
     fun validateEnteredData_withInvalidData_returnsFalse() {
 
+        //given a new reminder with invalid data
         val reminder = ReminderDataItem(
             title = "",
             description = "Buy Groceries",
@@ -59,9 +70,32 @@ class SaveReminderViewModelTest {
             latitude = -34.0,
             longitude = 151.0
         )
+        //when validating
+        val result = saveReminderViewModel.validateEnteredData(reminder)
 
-        val result=saveReminderViewModel.validateEnteredData(reminder)
-        assertThat(result,`is`(false))
+        //returns false
+        assertThat(result, `is`(false))
+
+    }
+
+    //save new reminder and confirms with a toast
+
+    @Test
+    fun saveReminder_newReminderData_confirmWithToast(){
+
+        //given a new reminder
+        val reminder = ReminderDataItem(
+            title = "New Market",
+            description = "Buy Groceries",
+            location = "Skull Mountain",
+            latitude = -34.0,
+            longitude = 151.0)
+
+        //saving the reminder
+        saveReminderViewModel.saveReminder(reminder)
+
+        //then confirms with a toast
+        assertThat(saveReminderViewModel.showToast.getOrAwaitValue(),`is`("Reminder Saved!"))
 
     }
 
