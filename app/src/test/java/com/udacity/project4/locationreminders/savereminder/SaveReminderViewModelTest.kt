@@ -3,6 +3,7 @@ package com.udacity.project4.locationreminders.savereminder
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.udacity.project4.locationreminders.MainCoroutineRule
 import com.udacity.project4.locationreminders.data.FakeDataSource
 import com.udacity.project4.locationreminders.getOrAwaitValue
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
@@ -21,6 +22,9 @@ class SaveReminderViewModelTest {
 
     @get:Rule
     var instantTaskExecutorRule = InstantTaskExecutorRule()
+
+    @get:Rule
+    var mainCoroutineRule = MainCoroutineRule()
 
     //TODO: provide testing to the SaveReminderView and its live data objects
     private lateinit var saveReminderViewModel: SaveReminderViewModel
@@ -43,13 +47,9 @@ class SaveReminderViewModelTest {
 
         //given a new reminder with valid data
         val reminder = ReminderDataItem(
-            title = "New Market",
-            description = "Buy Groceries",
-            location = "Skull Mountain",
-            latitude = -34.0,
-            longitude = 151.0
+            title = "New Market", description = "Buy Groceries", location = "Skull Mountain",
+            latitude = -34.0, longitude = 151.0
         )
-
         //when validating
         val result = saveReminderViewModel.validateEnteredData(reminder)
 
@@ -64,11 +64,8 @@ class SaveReminderViewModelTest {
 
         //given a new reminder with invalid data
         val reminder = ReminderDataItem(
-            title = "",
-            description = "Buy Groceries",
-            location = "Skull Mountain",
-            latitude = -34.0,
-            longitude = 151.0
+            title = "", description = "Buy Groceries", location = "Skull Mountain",
+            latitude = -34.0, longitude = 151.0
         )
         //when validating
         val result = saveReminderViewModel.validateEnteredData(reminder)
@@ -79,25 +76,34 @@ class SaveReminderViewModelTest {
     }
 
     //save new reminder and confirms with a toast
-
     @Test
-    fun saveReminder_newReminderData_confirmWithToast(){
+    fun saveReminder_newReminderData_confirmWithToast() {
 
         //given a new reminder
         val reminder = ReminderDataItem(
-            title = "New Market",
-            description = "Buy Groceries",
-            location = "Skull Mountain",
-            latitude = -34.0,
-            longitude = 151.0)
-
+            title = "New Market", description = "Buy Groceries", location = "Skull Mountain",
+            latitude = -34.0, longitude = 151.0
+        )
         //saving the reminder
         saveReminderViewModel.saveReminder(reminder)
 
         //then confirms with a toast
-        assertThat(saveReminderViewModel.showToast.getOrAwaitValue(),`is`("Reminder Saved!"))
-
+        assertThat(saveReminderViewModel.showToast.getOrAwaitValue(), `is`("Reminder Saved!"))
     }
 
+    @Test
+    fun checkLoadingStatus() {
+        //given a new reminder
+        val reminder = ReminderDataItem(
+            title = "New Market", description = "Buy Groceries", location = "Skull Mountain",
+            latitude = -34.0, longitude = 151.0
+        )
+        //
+        mainCoroutineRule.pauseDispatcher()
+        saveReminderViewModel.saveReminder(reminder)
+        assertThat(saveReminderViewModel.showLoading.getOrAwaitValue(), `is`(true))
+        mainCoroutineRule.resumeDispatcher()
+        assertThat(saveReminderViewModel.showLoading.getOrAwaitValue(), `is`(false))
+    }
 
 }

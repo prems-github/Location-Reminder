@@ -9,7 +9,17 @@ class FakeDataSource(var remindersList: MutableList<ReminderDTO>? = mutableListO
 
 //    TODO: Create a fake data source to act as a double to the real data source
 
+    private var shouldReturnError = false
+
+    fun setShouldReturnError(value: Boolean) {
+        shouldReturnError = value
+    }
+
     override suspend fun getReminders(): Result<List<ReminderDTO>> {
+
+        if (shouldReturnError) {
+            return Result.Error("Reminders not found")
+        }
 
         remindersList?.let {
             return Result.Success(ArrayList(remindersList))
@@ -22,6 +32,9 @@ class FakeDataSource(var remindersList: MutableList<ReminderDTO>? = mutableListO
     }
 
     override suspend fun getReminder(id: String): Result<ReminderDTO> {
+        if (shouldReturnError) {
+            return Result.Error("Reminder not found")
+        }
 
         val reminder = remindersList?.find { it.id == id }
         return if (reminder != null)
