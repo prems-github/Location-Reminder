@@ -1,16 +1,29 @@
 package com.udacity.project4
 
 import android.app.Application
+import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Espresso.pressBack
+import androidx.test.espresso.IdlingRegistry
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
+import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.local.LocalDB
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
 import com.udacity.project4.locationreminders.reminderslist.RemindersListViewModel
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
+import com.udacity.project4.util.DataBindingIdlingResource
+import com.udacity.project4.util.monitorActivity
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.context.startKoin
@@ -27,6 +40,8 @@ class RemindersActivityTest :
 
     private lateinit var repository: ReminderDataSource
     private lateinit var appContext: Application
+    // An idling resource that waits for Data Binding to have no pending bindings.
+    private val dataBindingIdlingResource = DataBindingIdlingResource()
 
     /**
      * As we use Koin as a Service Locator Library to develop our code, we'll also use Koin to test our code.
@@ -64,8 +79,43 @@ class RemindersActivityTest :
             repository.deleteAllReminders()
         }
     }
+    @Before
+    fun registerIdlingResource(){
+        //   IdlingRegistry.getInstance().register(EspressoIdlingResource.countingIdlingResource)
+        IdlingRegistry.getInstance().register(dataBindingIdlingResource)
+    }
 
+    @After
+    fun unregisterIdlingResource(){
+        //  IdlingRegistry.getInstance().unregister(EspressoIdlingResource.countingIdlingResource)
+        IdlingRegistry.getInstance().unregister(dataBindingIdlingResource)
+    }
 
-//    TODO: add End to End testing to the app
+    //save a new reminder and check for the same in UI and navigate
+    @Test
+    fun checkRemindersList_displayReminderInUI()= runBlocking{
+        val reminder = ReminderDTO(
+            title = "New Market", description = "Buy Groceries", location = "Skull Mountain",
+            latitude = -34.0, longitude = 151.0
+        )
+        repository.saveReminder(reminder)
+        // Start a Reminder screen.
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+        dataBindingIdlingResource.monitorActivity(activityScenario)
+
+        //check it displays the reminder
+        onView(withText(reminder.title)).check(matches(isDisplayed()))
+        onView(withText(reminder.location)).check(matches(isDisplayed()))
+        onView(withText(reminder.description)).check(matches(isDisplayed()))
+        onView(withId(R.id.addReminderFAB)).perform(click())
+
+        onView(withId(R.id.reminderTitle)).check(matches(isDisplayed()))
+        pressBack()
+        onView(withText(reminder.title)).check(matches(isDisplayed()))
+
+        Thread.sleep(1000)
+        activityScenario.close()
+
+    }
 
 }

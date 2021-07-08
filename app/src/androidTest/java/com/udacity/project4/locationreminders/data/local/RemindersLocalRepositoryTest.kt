@@ -69,6 +69,8 @@ class RemindersLocalRepositoryTest {
         assertThat(result.data.location, `is`(reminder.location))
     }
 
+
+    //retriving a reminder after deleting all reminders returns error message "Reminder not found!"
     @Test
     fun deleteAllReminders_tryRetrivingReminder_returnsError() = runBlocking{
         // GIVEN - save a reminder and delete all reminders.
@@ -82,6 +84,7 @@ class RemindersLocalRepositoryTest {
         // retrive reminder
        val result= localDataSource.getReminder(reminder.id)
 
+        //returns error message
         assertThat(result is Result.Error,  `is`(true))
         result as Result.Error
         assertThat(result.message,`is`("Reminder not found!"))
