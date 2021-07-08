@@ -62,10 +62,11 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         setHasOptionsMenu(true)
         setDisplayHomeAsUpEnabled(true)
 
+        //fused location provider client is used to find device location
         fusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(requireActivity())
 
-//        TODO: add the map setup implementation
+        //map implementation
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
         return binding.root
@@ -73,6 +74,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        //if poi is selected save the location else show a toast
         binding.saveButton.setOnClickListener {
             pointOfInterest?.let {
                 _viewModel.reminderSelectedLocationStr.value = it.name
@@ -84,6 +86,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
 
     }
+
+    //if permission is denied on onResult show snackbar with action settings else enable user location
 
     @SuppressLint("MissingPermission")
     override fun onRequestPermissionsResult(
@@ -100,6 +104,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
+    //snackbar showing a educated message with a action setting to allow permission
     private fun showSnackbar() {
         Snackbar.make(
             binding.root,
@@ -117,6 +122,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 })
             }.show()
     }
+
+    //once location is enabled, zooms to device location
 
     @SuppressLint("MissingPermission")
     private fun enableUserLocation() {
@@ -146,10 +153,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
+    //checking for existing permission
     private fun isPermissionEnabled() =
         ContextCompat.checkSelfPermission(
             requireContext(), Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
+
 
     @SuppressLint("MissingPermission")
     override fun onResume() {
@@ -163,6 +172,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
+
     override fun onMapReady(googleMap: GoogleMap?) {
         map = googleMap!!
         Log.d(TAG, "map is ready")
@@ -172,6 +182,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         setMarkOnPOIClick(map)
     }
 
+
+    //drops a marker on user selecting poi
     private fun setMarkOnPOIClick(map: GoogleMap) {
         map.setOnPoiClickListener { poi ->
             map.addMarker(MarkerOptions().position(poi.latLng).title(poi.name))
@@ -196,7 +208,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     //Gets device location and move camera to that location
-
     @SuppressLint("MissingPermission")
     private fun getDeviceLocation() {
 //        Log.d(TAG, "getDeviceLocation() is called")
@@ -232,8 +243,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         inflater.inflate(R.menu.map_options, menu)
     }
 
+    //users can select four different types of map type from menu options
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        // TODO: Change the map type based on the user's selection.
         R.id.normal_map -> {
             map.mapType = GoogleMap.MAP_TYPE_NORMAL
             true

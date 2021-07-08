@@ -3,7 +3,6 @@ package com.udacity.project4.locationreminders
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.udacity.project4.R
@@ -40,10 +39,8 @@ class ReminderDescriptionActivity : AppCompatActivity() {
         binding.reminderTitle.text=reminderDataItem.title
         binding.reminderDescription.text=reminderDataItem.description
 
-        Toast.makeText(this,"${reminderDataItem.location}", Toast.LENGTH_SHORT).show()
+//        Toast.makeText(this,"${reminderDataItem.location}", Toast.LENGTH_SHORT).show()
 
 
-
-//        TODO: Add the implementation of the reminder details
     }
 }
