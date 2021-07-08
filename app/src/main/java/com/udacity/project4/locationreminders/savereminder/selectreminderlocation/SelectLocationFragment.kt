@@ -45,7 +45,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private val LOCATION_ACCESS_REQUEST = 1
     private val TAG = SelectLocationFragment::class.java.simpleName
-    private val defaultZoomLevel = 17f
+    private val defaultZoomLevel = 18f
     private val defaultLocation = LatLng(-34.0, 151.0)
     private var pointOfInterest: PointOfInterest? = null
     private var isMapReady = false

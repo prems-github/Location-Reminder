@@ -1,10 +1,17 @@
 package com.udacity.project4.locationreminders.reminderslist
 
+import android.content.IntentSender
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.databinding.DataBindingUtil
+import com.firebase.ui.auth.AuthUI
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
@@ -19,6 +26,7 @@ class ReminderListFragment : BaseFragment() {
     override val _viewModel: RemindersListViewModel by viewModel()
     private lateinit var binding: FragmentRemindersBinding
     var previoustime: Long = 0
+    private val TAG = ReminderListFragment::class.java.simpleName
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -64,6 +72,36 @@ class ReminderListFragment : BaseFragment() {
         super.onResume()
         //load the reminders list on the ui
         _viewModel.loadReminders()
+        chekDeviceLocationSettings()
+    }
+
+    private fun chekDeviceLocationSettings() {
+        val locationRequest = LocationRequest.create().apply {
+            priority = LocationRequest.PRIORITY_LOW_POWER
+        }
+        val locationSettingsRequest = LocationSettingsRequest.Builder()
+            .addLocationRequest(locationRequest)
+        val settingsClient = LocationServices.getSettingsClient(requireActivity())
+            .checkLocationSettings(locationSettingsRequest.build())
+        settingsClient.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException) {
+                try {
+                    exception.startResolutionForResult(
+                        requireActivity(),
+                        1
+                    )
+                } catch (ex: IntentSender.SendIntentException) {
+                    Log.d(TAG, "Request failed ${ex.message}")
+                }
+            }
+        }
+        settingsClient.addOnCompleteListener {
+            if (it.isSuccessful) {
+                if (it.isSuccessful) {
+                    Log.d(TAG, "Device location is turned on")
+                }
+            }
+        }
     }
 
     private fun navigateToAddReminder() {
@@ -86,7 +124,8 @@ class ReminderListFragment : BaseFragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.logout -> {
-//                TODO: add the logout implementation
+                AuthUI.getInstance().signOut(requireContext())
+                requireActivity().finishAffinity()
             }
         }
         return super.onOptionsItemSelected(item)
