@@ -60,6 +60,7 @@ class ReminderListFragment : BaseFragment() {
                 previoustime = System.currentTimeMillis()
             }
         }
+
     }
 
     override fun onResume() {

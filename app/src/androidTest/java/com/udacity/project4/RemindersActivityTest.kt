@@ -113,6 +113,7 @@ class RemindersActivityTest :
             title = "New Market", description = "Buy Groceries", location = "Skull Mountain",
             latitude = -34.0, longitude = 151.0
         )
+
         repository.saveReminder(reminder)
         // Start a Reminder screen.
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
