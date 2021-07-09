@@ -1,5 +1,6 @@
 package com.udacity.project4
 
+import android.app.Activity
 import android.app.Application
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
@@ -8,6 +9,7 @@ import androidx.test.espresso.Espresso.pressBack
 import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.withDecorView
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
@@ -22,6 +24,7 @@ import com.udacity.project4.util.DataBindingIdlingResource
 import com.udacity.project4.util.monitorActivity
 import com.udacity.project4.utils.EspressoIdlingResource
 import kotlinx.coroutines.runBlocking
+import org.hamcrest.CoreMatchers.not
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -41,6 +44,7 @@ class RemindersActivityTest :
 
     private lateinit var repository: ReminderDataSource
     private lateinit var appContext: Application
+
     // An idling resource that waits for Data Binding to have no pending bindings.
     private val dataBindingIdlingResource = DataBindingIdlingResource()
 
@@ -80,21 +84,31 @@ class RemindersActivityTest :
             repository.deleteAllReminders()
         }
     }
+
     @Before
-    fun registerIdlingResource(){
+    fun registerIdlingResource() {
         IdlingRegistry.getInstance().register(EspressoIdlingResource.countingIdlingResource)
         IdlingRegistry.getInstance().register(dataBindingIdlingResource)
     }
 
     @After
-    fun unregisterIdlingResource(){
+    fun unregisterIdlingResource() {
         IdlingRegistry.getInstance().unregister(EspressoIdlingResource.countingIdlingResource)
         IdlingRegistry.getInstance().unregister(dataBindingIdlingResource)
     }
 
+    // get activity context
+    private fun getActivity(activityScenario: ActivityScenario<RemindersActivity>): Activity? {
+        var activity: Activity? = null
+        activityScenario.onActivity {
+            activity = it
+        }
+        return activity
+    }
+
     //save a new reminder and check for the same in UI and navigate
     @Test
-    fun checkRemindersList_displayReminderInUI()= runBlocking{
+    fun checkRemindersList_displayReminderInUI() = runBlocking {
         val reminder = ReminderDTO(
             title = "New Market", description = "Buy Groceries", location = "Skull Mountain",
             latitude = -34.0, longitude = 151.0
@@ -115,6 +129,54 @@ class RemindersActivityTest :
         onView(withText(reminder.title)).check(matches(isDisplayed()))
 
         Thread.sleep(1000)
+        activityScenario.close()
+
+    }
+
+    //snackbar pops up with message when you try to save reminder without selecting a location
+    @Test
+    fun snackbarMessage_saveReminderWithOutLocation_snackbarPopsUp() = runBlocking {
+
+        //starting from activity
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+        dataBindingIdlingResource.monitorActivity(activityScenario)
+        onView(withId(R.id.addReminderFAB)).perform(click())
+
+        //when clicking on save button
+        onView(withId(R.id.saveReminder)).perform(click())
+
+        //shows snackbar
+        onView(withId(R.id.snackbar_text))
+            .check(matches(withText(R.string.select_location)))
+        pressBack()
+
+        Thread.sleep(1000)
+        activityScenario.close()
+
+    }
+
+  /** Note: This test works well in android sdk verstions <=29 (Android 10). From Android 11(sdk 30) there
+   * is an open issue going on. Will update once it has been fixed.
+   * Open Issue Link : https://github.com/android/android-test/issues/803
+  * */
+
+    @Test
+    fun toastMessage_notSelectingLocation_showToastMessage() = runBlocking {
+
+        //starting from activity
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+        var activity=getActivity(activityScenario)
+        dataBindingIdlingResource.monitorActivity(activityScenario)
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.selectLocation)).perform(click())
+
+        //when clicking on save button
+        onView(withId(R.id.saveButton)).perform(click())
+
+        //shows toast with right text
+        onView(withText(R.string.select_location)).inRoot(withDecorView(not((activity?.window?.getDecorView()))))
+            .check(matches(isDisplayed()))
+
         activityScenario.close()
 
     }
