@@ -35,6 +35,7 @@ import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
+import java.util.*
 
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
@@ -179,7 +180,30 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         isMapReady = true
         enableUserLocation()
         setMapStyle(map)
+        setMarkOnLongClick(map)
         setMarkOnPOIClick(map)
+    }
+
+    private fun setMarkOnLongClick(map: GoogleMap) {
+        map.setOnMapLongClickListener { latLng ->
+            val snippet = String.format(
+                Locale.getDefault(),
+                "Lat: %1$.2f, Lng:%2$.2f",
+                latLng.latitude,
+                latLng.longitude
+            )
+            map.addMarker(
+                MarkerOptions().position(latLng).title(getString(R.string.dropped_pin))
+                    .snippet(snippet)
+            )
+            binding.saveButton.setOnClickListener {
+                _viewModel.reminderSelectedLocationStr.value = getString(R.string.dropped_pin)
+                _viewModel.latitude.value = latLng.latitude
+                _viewModel.longitude.value = latLng.longitude
+                _viewModel.navigationCommand.value = NavigationCommand.Back
+            }
+
+        }
     }
 
 
