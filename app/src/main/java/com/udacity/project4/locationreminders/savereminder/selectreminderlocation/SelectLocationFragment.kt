@@ -206,7 +206,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
-
     //drops a marker on user selecting poi
     private fun setMarkOnPOIClick(map: GoogleMap) {
         map.setOnPoiClickListener { poi ->
