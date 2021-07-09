@@ -147,11 +147,7 @@ class SaveReminderFragment : BaseFragment() {
                     binding.root,
                     R.string.background_permission_denied_explanation,
                     Snackbar.LENGTH_INDEFINITE
-                ).also {
-                    val snackbarTextView = (it.view.findViewById(R.id.snackbar_text)) as TextView
-                    snackbarTextView.maxLines = 3
-                }
-                    .setAction(R.string.settings) {
+                ).setAction(R.string.settings) {
                         startActivity(Intent().apply {
                             action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
                             data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
@@ -196,10 +192,16 @@ class SaveReminderFragment : BaseFragment() {
             if (exception is ResolvableApiException && resolve) {
                 Log.d(TAG, "is resolvable :${exception is ResolvableApiException} ")
                 try {
-                    exception.startResolutionForResult(
-                        requireActivity(),
-                        REQUEST_TURN_DEVICE_LOCATION_ON
+                    startIntentSenderForResult(
+                        exception.resolution.intentSender,
+                        REQUEST_TURN_DEVICE_LOCATION_ON,
+                        null,
+                        0,
+                        0,
+                        0,
+                        null
                     )
+
                 } catch (sendEx: IntentSender.SendIntentException) {
                     Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
                 }
@@ -208,7 +210,10 @@ class SaveReminderFragment : BaseFragment() {
                     binding.root.rootView,
                     R.string.location_required_error,
                     Snackbar.LENGTH_INDEFINITE
-                ).setAction(android.R.string.ok) {
+                ).also {
+                    val snackbarTextView = (it.view.findViewById(R.id.snackbar_text)) as TextView
+                    snackbarTextView.maxLines = 3
+                }.setAction(android.R.string.ok) {
                     checkDeviceLocationSettingsAndAddGeoFence()
                 }.show()
             }
@@ -216,8 +221,17 @@ class SaveReminderFragment : BaseFragment() {
         locationSettingsResponseTask.addOnCompleteListener {
             if (it.isSuccessful) {
                 Log.d(TAG, "Device location is turned on")
+                Log.d(TAG, "geofence triggered")
                 addGeoFence(reminderDataItem)
             }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON) {
+            checkDeviceLocationSettingsAndAddGeoFence(false)
+            Log.d(TAG,"OnActivity result is called")
         }
     }
 

@@ -160,7 +160,7 @@ class RemindersActivityTest :
    * is an open issue going on. Will update once it has been fixed.
    * Open Issue Link : https://github.com/android/android-test/issues/803
   * */
-
+  
     @Test
     fun toastMessage_notSelectingLocation_showToastMessage() = runBlocking {
 
